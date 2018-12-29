@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "module" : "commonjs",
+    "moduleResolution" : "node",
+    "sourceMap" : true,
+    "jsx" : "React",
+    "lib" : [ "dom", "es2015" ],
+    "target" : "es2015",
+    "outDir" : "./build/"
+  },
+  "include" : [
+    "src/**/*"
+  ]
+}
