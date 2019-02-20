@@ -73,11 +73,12 @@ export async function onExecResultFunction(execResultFunction: (event: ExecResul
 
 export function debugStart(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    socket.emit("debug", ({ success }) => {
+    socket.emit("debug", 
+    {}, ({ success, ...other }) => {
       if(success) {
-        resolve();
+        resolve(other.results);
       } else {
-        reject();
+        reject(other.error);
       }
     });
   });
@@ -85,11 +86,12 @@ export function debugStart(): Promise<void> {
 
 export function debugContinue(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    socket.emit("debugStart", ({ success }) => {
+    socket.emit("debugStart",
+    {}, ({ success, ...other }) => {
       if(success) {
-        resolve();
+        resolve(other.results);
       } else {
-        reject();
+        reject(other.error);
       }
     });
   })
@@ -97,35 +99,39 @@ export function debugContinue(): Promise<void> {
 
 export function debugNext(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    socket.emit("debugNext", ({ success }) => {
+    socket.emit("debugNext",
+    {}, ({ success, ...other }) => {
       if(success) {
-        resolve();
+        resolve(other.results);
       } else {
-        reject();
+        reject(other.error);
       }
-    })
+    });
   });
 }
 
 export function debugStep(reverse?: boolean): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    socket.emit("debugStep", ({ success }) => {
+    socket.emit("debugStep", {
+      reverse: reverse
+    }, ({ success, ...other }) => {
       if(success) {
-        resolve();
+        resolve(other.results);
       } else {
-        reject();
+        reject(other.error);
       }
-    }, reverse);
+    });
   })
 }
 
 export function debugFinish(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    socket.emit("debugFinish", ({ success }) => {
+    socket.emit("debugFinish",
+    {}, ({ success, ...other }) => {
       if(success) {
-        resolve();
+        resolve(other.results);
       } else {
-        reject();
+        reject(other.error);
       }
     });
   })
@@ -133,47 +139,60 @@ export function debugFinish(): Promise<void> {
 
 export function getFiles(dir?: string) {
   return new Promise((resolve, reject) => {
-    socket.emit("getFiles", dir, ({ success, files }) => {
+    socket.emit("getFiles",
+    {
+      dir: dir
+    }, ({ success, ...other }) => {
       if(success) {
-        resolve(files);
+        resolve(other.results);
       } else {
-        reject();
+        reject(other.error);
       }
-    })
+    });
   });
 }
 
 export function getFileContents(file: string): Promise<string> {
   return new Promise<string>((resolve, reject) => {
-    socket.emit("getFileContents", file, ({ success, fileContents }) => {
+    socket.emit("getFileContents",
+    {
+      file: file,
+    }, ({ success, ...other }) => {
       if(success) {
-        resolve(fileContents);
+        resolve(other.results);
       } else {
-        reject();
+        reject(other.error);
       }
-    })
+    });
   });
 }
 
 export function addBreakpoint(filename: string, lineNum: number): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    socket.emit("addBreakpoint", filename, lineNum, ({ success }) => {
+    socket.emit("addBreakpoint",
+    {
+      fileName: filename,
+      lineNumber: lineNum,
+    }, ({ success, ...other }) => {
       if(success) {
         resolve();
       } else {
-        reject();
+        reject(other.error);
       }
-    })
+    });
   });
 }
 
 export function removeBreakpoint(bpNum: number): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    socket.emit("removeBreakpoint", bpNum, ({ success }) => {
+    socket.emit("removeBreakpoint",
+    {
+      bpNum: bpNum,
+    }, ({ success, ...other }) => {
       if(success) {
         resolve();
       } else {
-        reject();
+        reject(other.error);
       }
     });
   });
@@ -181,8 +200,9 @@ export function removeBreakpoint(bpNum: number): Promise<void> {
 
 export function getBreakpoints(): Promise<BreakpointListResponse> {
   return new Promise<BreakpointListResponse>((resolve, reject) => {
-    socket.emit("getBreakpoints", ({ success, results }) => {
+    socket.emit("getBreakpoints", {}, ({ success, ...other }) => {
       if(success) {
+        const results = other.results;
         const table: BreakpointListResponse = {
           nr_rows: parseInt(results.BreakpointTable.nr_rows),
           nr_cols: parseInt(results.BreakpointTable.nr_cols),
@@ -211,18 +231,79 @@ export function getBreakpoints(): Promise<BreakpointListResponse> {
         };
         resolve(table);
       } else {
-        reject();
+        reject(other.error);
       }
     });
   });
 }
 
 export function getStackInfo(): Promise<StackFrameList> {
-  return new Promise<StackFrameList>((resolve, reject) => socket.emit('getStackInfo', ({ success, ...other }) => {
-    if(success) {
-      resolve(other.results.results.stack);
-    } else {
-      reject(other.error);
-    }
-  }));
+  return new Promise<StackFrameList>((resolve, reject) => socket.emit('getStackInfo',
+    {}, ({ success, ...other }) => {
+      if(success) {
+        resolve(other.results.results.stack);
+      } else {
+        reject(other.error);
+      }
+    })
+  );
+}
+
+export function addToWatch(expression: string): Promise<any> {
+  return new Promise<any>((resolve, reject) => {
+    socket.emit('addToWatch', {
+      expression,
+    }, ({ success, ...other}) => {
+      if(success) {
+        console.log(other.results);
+        resolve(other.results);
+      } else {
+        reject(other.error);
+      }
+    });
+  })
+}
+
+export function removeFromWatch(name: string): Promise<any> {
+  return new Promise<any>((resolve, reject) => {
+    socket.emit('removeFromWatch', {
+      name,
+    }, ({ success, ...other }) => {
+      if(success) {
+        console.log(other.results);
+        resolve(other.results);
+      } else {
+        reject(other.error);
+      }
+    });
+  });
+}
+
+export function watchUpdate(): Promise<any> {
+  return new Promise<any>((resolve, reject) => {
+    socket.emit('watchUpdate', {}, ({ success, ...other }) => {
+      if(success) {
+        console.log(other.results);
+        resolve(other.results);
+      } else {
+        reject(other.error);
+      }
+    });
+  });
+}
+
+export function editItemOnWatch(name: string, expression: string): Promise<any> {
+  return new Promise<any>((resolve, reject) => {
+    socket.emit('watchUpdate', {
+      name,
+      expression,
+    }, ({ success, ...other }) => {
+      if(success) {
+        console.log(other.results);
+        resolve(other.results);
+      } else {
+        reject(other.error);
+      }
+    });
+  });
 }

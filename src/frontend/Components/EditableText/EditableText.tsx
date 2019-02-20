@@ -5,6 +5,7 @@ interface EditableTextProps {
   label?: string;
   value: string;
   onChange: (value) => void;
+  alwaysEditing?: boolean;
 }
 
 interface EditableTextState {
@@ -18,7 +19,7 @@ class EditableText extends React.Component<EditableTextProps, EditableTextState>
   constructor(props) {
     super(props);
     this.state = {
-      editing: false,
+      editing: this.props.alwaysEditing,
     };
     this.textFieldRef = React.createRef();
   }
@@ -26,9 +27,10 @@ class EditableText extends React.Component<EditableTextProps, EditableTextState>
   handleKeyDown = (ev) => {
     if(ev.keyCode === 13) {
       this.setState({
-        editing: false,
+        editing: this.props.alwaysEditing,
       });
-      this.props.onChange(this.textFieldRef.current.value);
+      this.props.onChange(this.textFieldRef.current.value.trim());
+      this.textFieldRef.current.value = "";
     }
   }
   

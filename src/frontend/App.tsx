@@ -52,6 +52,8 @@ interface State {
 
 class App extends React.Component<Props, State> {
 
+  private watchRef: React.RefObject<Watch>;
+
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -67,7 +69,7 @@ class App extends React.Component<Props, State> {
     };
 
     this.handleLoadFile = this.handleLoadFile.bind(this);
-    
+    this.watchRef = React.createRef();
   }
 
   componentDidMount() {
@@ -88,6 +90,7 @@ class App extends React.Component<Props, State> {
         this.handleLoadFile(ev.results.frame.file);
         getStackInfo().then(res => { console.log(res); })
           .catch(err => console.error(err));
+        this.watchRef.current.updateVars();
       }
       
       if(ev.results.reason && ev.results.reason === "exited-normally") {
@@ -279,7 +282,7 @@ ${err.stack}`,
               breakpoints={this.state.breakpoint.list}
               onClickBreakpoint={this.handleBreakpointClick}
             />
-            <Watch />
+            <Watch ref={this.watchRef} />
           </RightSideBar>
         </Grid>
       </Grid>

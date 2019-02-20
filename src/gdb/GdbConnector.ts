@@ -168,6 +168,22 @@ class GdbConnection extends EventEmitter {
     return this.sendCommand('-stack-list-frames');
   }
 
+  async varCreate(expr: string, name?: string, frameAddr?: string): Promise<Result> {
+    return this.sendCommand('-var-create', name ? name : '-', frameAddr ? frameAddr : '*', expr);
+  }
+  
+  async varDelete(name: string): Promise<Result> {
+    return this.sendCommand('-var-delete', name);
+  }
+  
+  async varAssign(name: string, expr: string): Promise<Result> {
+    return this.sendCommand('-var-assign', name, expr);
+  }
+  
+  async varUpdate(simpleValues: boolean, name?: string): Promise<Result> {
+    return this.sendCommand('-var-update', simpleValues ? '--simple-values' : '--all-values', name ? name : '*');
+  }
+
   async step(reverse?: boolean): Promise<Result> {
     if(reverse) {
       return this.sendCommand('-exec-step', '--reverse');

@@ -1,6 +1,7 @@
 import GdbConnection from "../gdb/GdbConnector";
 
 import KaracaOSBuildManager from '../karacaos_builder/KaracaOSBuildManager';
+import { AddToWatchParams, SocketEventHandlerParams, DebugStepParams, AddBreakpointParams, RemoveBreakpointParams, GetFilesParams, GetFileContentsParams, SocketEventCallbackResponse, RemoveFromWatchParams, EditItemOnWatchParams } from "./KaracaOSDebuggerTypes";
 
 const BASE_DIR = "/home/karacasoft/Documents/KaracaOS";
 
@@ -48,128 +49,82 @@ export function serveOnSocketIo() {
       console.log(ev);
     });
 
-    socket.on('build', async (callback) => {
-      try {
-        await kaosBuilder.buildAll();
-        await kaosBuilder.generateIso();
-        callback({ success: true });
-      } catch(err) {
-        console.error(err);
-        callback({ success: false });
-      }
-    });
+    function errorHandledOnEvent<T extends SocketEventHandlerParams>(event: string, handler: (params: T) => any) {
+      socket.on(event, async (params: T, callback: (resp: SocketEventCallbackResponse) => void) => {
+        try {
+          const results = await handler(params);
+          callback({ success: true, results: results });
+        } catch(err) {
+          console.error(err);
+          callback({ success: false, error: err });
+        }
+      })
+    }
 
-    socket.on('debug', async (callback) => {
-      try {
-        await kaosBuilder.debug();
-        await gdbConnection.target('localhost', 1234);
-        callback({ success: true });
-      } catch(err) {
-        console.error(err);
-        callback({ success: false });
-      }
-    });
-
-    socket.on('debugStart', async (callback) => {
-      try {
-        await gdbConnection.continue();
-        callback({ success: true });
-      } catch(err) {
-        console.error(err);
-        callback({ success: false });
-      }
-    });
-
-    socket.on('debugNext', async (callback) => {
-      try {
-        await gdbConnection.next();
-        callback({ success: true });
-      } catch(err) {
-        console.error(err);
-        callback({ success: false });
-      }
+    errorHandledOnEvent('build', async () => {
+      await kaosBuilder.buildAll();
+      await kaosBuilder.generateIso();
     });
     
-    socket.on('debugStep', async (callback, reverse?: boolean) => {
-      try {
-        await gdbConnection.step(reverse);
-        callback({ success: true });
-      } catch(err) {
-        console.error(err);
-        callback({ success: false });
-      }
+    errorHandledOnEvent('debug', async () => {
+      await kaosBuilder.debug();
+      await gdbConnection.target('localhost', 1234);
     });
 
-    socket.on('debugFinish', async (callback) => {
-      try {
-        await gdbConnection.finish();
-        callback({ success: true });
-      } catch(err) {
-        console.error(err);
-        callback({ success: false });
-      }
+    errorHandledOnEvent('debugStart', async () => {
+      await gdbConnection.continue();
+    });
+    
+    errorHandledOnEvent('debugNext', async () => {
+      await gdbConnection.next();
+    });
+    
+    errorHandledOnEvent('debugStep', async (params: DebugStepParams) => {
+      await gdbConnection.step(params.reverse);
+    });
+    
+    errorHandledOnEvent('debugFinish', async () => {
+      await gdbConnection.finish();
+    });
+    
+    errorHandledOnEvent('addBreakpoint', async (params: AddBreakpointParams) => {
+      await gdbConnection.addBreakpoint(params.fileName, params.lineNumber);
+    });
+    
+    errorHandledOnEvent('removeBreakpoint', async (params: RemoveBreakpointParams) => {
+      await gdbConnection.removeBreakpoint(params.bpNum);
     });
 
-    socket.on('addBreakpoint', async (fileName, lineNumber, callback) => {
-      try {
-        await gdbConnection.addBreakpoint(fileName, lineNumber);
-        callback({ success: true });
-      } catch(err) {
-        console.error(err);
-        callback({ success: false });
-      }
+    errorHandledOnEvent('getBreakpoints', async () => {
+      return await gdbConnection.listBreakpoints();
     });
 
-    socket.on('removeBreakpoint', async (bpNum, callback) => {
-      try {
-        await gdbConnection.removeBreakpoint(bpNum);
-        callback({ success: true });
-      } catch(err) {
-        console.error(err);
-        callback({ success: false });
-      }
+    errorHandledOnEvent('getStackInfo', async () => {
+      return await gdbConnection.stackListFrames();
+    });
+    
+    errorHandledOnEvent('addToWatch', async (params: AddToWatchParams) => {
+      return await gdbConnection.varCreate(params.expression, params.name, '@');
+    });
+    
+    errorHandledOnEvent('removeFromWatch', async (params: RemoveFromWatchParams) => {
+      return await gdbConnection.varDelete(params.name);
     });
 
-    socket.on('getBreakpoints', async (callback) => {
-      try {
-        const results = await gdbConnection.listBreakpoints();
-        callback({ success: true, results });
-      } catch(err) {
-        console.error(err);
-        callback({ success: false });
-      }
+    errorHandledOnEvent('watchUpdate', async () => {
+      return await gdbConnection.varUpdate(false);
     });
 
-    socket.on('getStackInfo', async (callback) => {
-      try {
-        const results = await gdbConnection.stackListFrames();
-        callback({ success: true, results });
-      } catch(err) {
-        console.error(err);
-        callback({ success: false, error: err });
-      }
+    errorHandledOnEvent('editItemOnWatch', async (params: EditItemOnWatchParams) => {
+      return await gdbConnection.varAssign(params.name, params.expression);
     });
 
-    socket.on('getFiles', async (dir, callback) => {
-      try {
-        const files = await kaosBuilder.getFiles(dir);
-        callback({ success: true, files });
-      } catch(err) {
-        console.error(err);
-        callback({ success: false });
-      }
+    errorHandledOnEvent('getFiles', async (params: GetFilesParams) => {
+      return await kaosBuilder.getFiles(params.dir);
     });
 
-    socket.on('getFileContents', async (file, callback) => {
-      try {
-        const fileContents = await kaosBuilder.getFileContents(file);
-        callback({ success: true, fileContents });
-      } catch(err) {
-        console.error(err);
-        callback({ success: false });
-      }
+    errorHandledOnEvent('getFileContents', async (params: GetFileContentsParams) => {
+      return await kaosBuilder.getFileContents(params.file);
     });
-
-
   }
 };

@@ -6,11 +6,12 @@ import EditableText from '../EditableText/EditableText';
 interface WatchItemProps {
   watchItem: WatchItemDef;
   onChange: (expression: string) => void;
+  
+  addNew?: boolean;
 }
 
 interface WatchItemState {
-  currentExpr?: string;
-  editing: boolean;
+  
 }
 
 class WatchItem extends React.Component<WatchItemProps, WatchItemState> {
@@ -18,15 +19,7 @@ class WatchItem extends React.Component<WatchItemProps, WatchItemState> {
   constructor(props) {
     super(props);
     this.state = {
-      editing: false,
     };
-  }
-  
-  handleOnClickExpression = () => {
-    this.setState({
-      editing: true,
-      currentExpr: this.props.watchItem.expression,
-    });
   }
   
   handleOnChange = (value: string) => {
@@ -38,12 +31,13 @@ class WatchItem extends React.Component<WatchItemProps, WatchItemState> {
     return <TableRow>
       <TableCell>
         <EditableText
+          alwaysEditing={this.props.addNew}
           label="Expression"
           value={watchItem.expression}
           onChange={this.handleOnChange}
         />
       </TableCell>
-      <TableCell><Typography>{watchItem.result}</Typography></TableCell>
+      <TableCell><Typography>{watchItem.value}</Typography></TableCell>
     </TableRow>;
   }
 }
