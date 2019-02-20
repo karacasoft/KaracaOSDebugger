@@ -48,7 +48,6 @@ export function serveOnSocketIo() {
       console.log(ev);
     });
 
-
     socket.on('build', async (callback) => {
       try {
         await kaosBuilder.buildAll();
@@ -138,6 +137,16 @@ export function serveOnSocketIo() {
       } catch(err) {
         console.error(err);
         callback({ success: false });
+      }
+    });
+
+    socket.on('getStackInfo', async (callback) => {
+      try {
+        const results = await gdbConnection.stackListFrames();
+        callback({ success: true, results });
+      } catch(err) {
+        console.error(err);
+        callback({ success: false, error: err });
       }
     });
 

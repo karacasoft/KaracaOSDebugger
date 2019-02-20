@@ -160,13 +160,20 @@ class GdbConnection extends EventEmitter {
     return this.sendCommand('-break-delete', `${bpNum}`);
   }
 
+  async stackInfoFrame(): Promise<Result> {
+    return this.sendCommand('-stack-info-frame');
+  }
+
+  async stackListFrames(): Promise<Result> {
+    return this.sendCommand('-stack-list-frames');
+  }
+
   async step(reverse?: boolean): Promise<Result> {
     if(reverse) {
       return this.sendCommand('-exec-step', '--reverse');
     } else {
       return this.sendCommand('-exec-step');
     }
-
   }
 
   async continue(): Promise<Result> {

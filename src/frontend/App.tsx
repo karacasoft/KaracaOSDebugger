@@ -8,9 +8,11 @@ import AppBar from './Components/AppBar/AppBar';
 
 import './global.css';
 import DirTree from './Components/DirTree/DirTree';
-import { socket, getFileContents, getBreakpoints, addBreakpoint, removeBreakpoint, debugStart, debugContinue, onExecResultFunction, debugNext, debugStep, debugFinish } from './Service/debugService';
+import { socket, getFileContents, getBreakpoints, addBreakpoint, removeBreakpoint, debugStart, debugContinue, onExecResultFunction, debugNext, debugStep, debugFinish, getStackInfo } from './Service/debugService';
 import BreakpointList, { Breakpoint } from './Components/BreakpointList/BreakpointList';
 import EventLog from './Components/EventLog/EventLog';
+import RightSideBar from './Components/RightSideBar/RightSideBar';
+import Watch from './Components/Watch/Watch';
 
 const styles = (_) => ({
   marginTop: {
@@ -65,6 +67,7 @@ class App extends React.Component<Props, State> {
     };
 
     this.handleLoadFile = this.handleLoadFile.bind(this);
+    
   }
 
   componentDidMount() {
@@ -83,6 +86,8 @@ class App extends React.Component<Props, State> {
           },
         });
         this.handleLoadFile(ev.results.frame.file);
+        getStackInfo().then(res => { console.log(res); })
+          .catch(err => console.error(err));
       }
       
       if(ev.results.reason && ev.results.reason === "exited-normally") {
@@ -116,7 +121,6 @@ class App extends React.Component<Props, State> {
     });
     getBreakpoints()
       .then(res => {
-        console.log(res);
         this.setState({
           breakpoint: {
             list: res.body.map((br): Breakpoint => ({
@@ -269,11 +273,14 @@ ${err.stack}`,
         <Grid item
           xs={3}
           className={this.props.classes.marginTop + " " + this.props.classes.codeDisplayGrid}>
-          <BreakpointList
-            loading={this.state.breakpoint.loading}
-            breakpoints={this.state.breakpoint.list}
-            onClickBreakpoint={this.handleBreakpointClick}
-          />
+          <RightSideBar tabHeaders={["Breakpoints", "Watch"]}>
+            <BreakpointList
+              loading={this.state.breakpoint.loading}
+              breakpoints={this.state.breakpoint.list}
+              onClickBreakpoint={this.handleBreakpointClick}
+            />
+            <Watch />
+          </RightSideBar>
         </Grid>
       </Grid>
       <Grid container>

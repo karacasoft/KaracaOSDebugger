@@ -26,7 +26,6 @@ interface State {
 }
 
 const styles = theme => {
-  console.log(theme);
   return ({
   codeDisplay: {
     height: "100%"

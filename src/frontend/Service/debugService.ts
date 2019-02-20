@@ -1,4 +1,5 @@
 import * as client from 'socket.io-client';
+import { StackFrameList } from './debugServiceTypes';
 
 export const socket = client.connect('http://localhost:5000');
 
@@ -70,7 +71,7 @@ export async function onExecResultFunction(execResultFunction: (event: ExecResul
   globalExecResultFunction = execResultFunction;
 }
 
-export async function debugStart(): Promise<void> {
+export function debugStart(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     socket.emit("debug", ({ success }) => {
       if(success) {
@@ -82,7 +83,7 @@ export async function debugStart(): Promise<void> {
   });
 }
 
-export async function debugContinue(): Promise<void> {
+export function debugContinue(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     socket.emit("debugStart", ({ success }) => {
       if(success) {
@@ -94,7 +95,7 @@ export async function debugContinue(): Promise<void> {
   })
 }
 
-export async function debugNext(): Promise<void> {
+export function debugNext(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     socket.emit("debugNext", ({ success }) => {
       if(success) {
@@ -106,7 +107,7 @@ export async function debugNext(): Promise<void> {
   });
 }
 
-export async function debugStep(reverse?: boolean): Promise<void> {
+export function debugStep(reverse?: boolean): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     socket.emit("debugStep", ({ success }) => {
       if(success) {
@@ -118,7 +119,7 @@ export async function debugStep(reverse?: boolean): Promise<void> {
   })
 }
 
-export async function debugFinish(): Promise<void> {
+export function debugFinish(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     socket.emit("debugFinish", ({ success }) => {
       if(success) {
@@ -130,7 +131,7 @@ export async function debugFinish(): Promise<void> {
   })
 }
 
-export async function getFiles(dir?: string) {
+export function getFiles(dir?: string) {
   return new Promise((resolve, reject) => {
     socket.emit("getFiles", dir, ({ success, files }) => {
       if(success) {
@@ -142,7 +143,7 @@ export async function getFiles(dir?: string) {
   });
 }
 
-export async function getFileContents(file: string): Promise<string> {
+export function getFileContents(file: string): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     socket.emit("getFileContents", file, ({ success, fileContents }) => {
       if(success) {
@@ -154,7 +155,7 @@ export async function getFileContents(file: string): Promise<string> {
   });
 }
 
-export async function addBreakpoint(filename: string, lineNum: number): Promise<void> {
+export function addBreakpoint(filename: string, lineNum: number): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     socket.emit("addBreakpoint", filename, lineNum, ({ success }) => {
       if(success) {
@@ -166,7 +167,7 @@ export async function addBreakpoint(filename: string, lineNum: number): Promise<
   });
 }
 
-export async function removeBreakpoint(bpNum: number): Promise<void> {
+export function removeBreakpoint(bpNum: number): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     socket.emit("removeBreakpoint", bpNum, ({ success }) => {
       if(success) {
@@ -178,7 +179,7 @@ export async function removeBreakpoint(bpNum: number): Promise<void> {
   });
 }
 
-export async function getBreakpoints(): Promise<BreakpointListResponse> {
+export function getBreakpoints(): Promise<BreakpointListResponse> {
   return new Promise<BreakpointListResponse>((resolve, reject) => {
     socket.emit("getBreakpoints", ({ success, results }) => {
       if(success) {
@@ -208,11 +209,20 @@ export async function getBreakpoints(): Promise<BreakpointListResponse> {
             }
           }))
         };
-        console.log(table);
         resolve(table);
       } else {
         reject();
       }
     });
   });
+}
+
+export function getStackInfo(): Promise<StackFrameList> {
+  return new Promise<StackFrameList>((resolve, reject) => socket.emit('getStackInfo', ({ success, ...other }) => {
+    if(success) {
+      resolve(other.results.results.stack);
+    } else {
+      reject(other.error);
+    }
+  }));
 }
