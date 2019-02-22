@@ -255,7 +255,6 @@ export function addToWatch(expression: string): Promise<any> {
       expression,
     }, ({ success, ...other}) => {
       if(success) {
-        console.log(other.results);
         resolve(other.results);
       } else {
         reject(other.error);
@@ -270,7 +269,6 @@ export function removeFromWatch(name: string): Promise<any> {
       name,
     }, ({ success, ...other }) => {
       if(success) {
-        console.log(other.results);
         resolve(other.results);
       } else {
         reject(other.error);
@@ -283,7 +281,6 @@ export function watchUpdate(): Promise<any> {
   return new Promise<any>((resolve, reject) => {
     socket.emit('watchUpdate', {}, ({ success, ...other }) => {
       if(success) {
-        console.log(other.results);
         resolve(other.results);
       } else {
         reject(other.error);
@@ -299,7 +296,34 @@ export function editItemOnWatch(name: string, expression: string): Promise<any> 
       expression,
     }, ({ success, ...other }) => {
       if(success) {
+        resolve(other.results);
+      } else {
+        reject(other.error);
+      }
+    });
+  });
+}
+
+export function getRegisterValues(): Promise<any> {
+  return new Promise<any>((resolve, reject) => {
+    socket.emit('getRegisterValues', {
+      format: 'x',
+      registers: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
+    }, ({ success, ...other}) => {
+      if(success) {
         console.log(other.results);
+        resolve(other.results);
+      } else {
+        reject(other.error);
+      }
+    });
+  });
+}
+
+export function getRegisterNames(): Promise<any> {
+  return new Promise<any>((resolve, reject) => {
+    socket.emit('getRegisterNames', {}, ({ success, ...other}) => {
+      if(success) {
         resolve(other.results);
       } else {
         reject(other.error);

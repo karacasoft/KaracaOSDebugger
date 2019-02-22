@@ -107,7 +107,7 @@ class GdbConnection extends EventEmitter {
   static start() : Promise<GdbConnection> {
     return new Promise<GdbConnection>((resolve) => {
       let childProcess: ChildProcess;
-      childProcess = exec('/usr/bin/gdb --interpreter=mi');
+      childProcess = exec('/usr/bin/gdb --interpreter=mi2');
       let conn = new GdbConnection(childProcess);
       resolve(conn);
     });
@@ -116,7 +116,7 @@ class GdbConnection extends EventEmitter {
   static target(host: string, port: number) : Promise<GdbConnection> {
     return new Promise<GdbConnection>(async (resolve, reject) => {
       let childProcess: ChildProcess;
-      childProcess = exec('/usr/bin/gdb --interpreter=mi');
+      childProcess = exec('/usr/bin/gdb --interpreter=mi2');
       let conn = new GdbConnection(childProcess);
       try {
         const data = await conn.target(host, port);
@@ -182,6 +182,19 @@ class GdbConnection extends EventEmitter {
   
   async varUpdate(simpleValues: boolean, name?: string): Promise<Result> {
     return this.sendCommand('-var-update', simpleValues ? '--simple-values' : '--all-values', name ? name : '*');
+  }
+
+  async dataListRegisterValues(skipUnavailable?: boolean,
+      format?: 'x' | 'o' | 't' | 'd' | 'r' | 'N', ...regs: number[]): Promise<Result> {
+    return this.sendCommand('-data-list-register-values',
+      (skipUnavailable) ? '--skip-unavailable' : '',
+      (format) ? format : 'x',
+      ...regs.map(reg => reg.toString())
+    );
+  }
+
+  async dataListRegisterNames(...regs: number[]): Promise<Result> {
+    return this.sendCommand('-data-list-register-names', ...regs.map(reg => reg.toString()));
   }
 
   async step(reverse?: boolean): Promise<Result> {

@@ -1,7 +1,7 @@
 import GdbConnection from "../gdb/GdbConnector";
 
 import KaracaOSBuildManager from '../karacaos_builder/KaracaOSBuildManager';
-import { AddToWatchParams, SocketEventHandlerParams, DebugStepParams, AddBreakpointParams, RemoveBreakpointParams, GetFilesParams, GetFileContentsParams, SocketEventCallbackResponse, RemoveFromWatchParams, EditItemOnWatchParams } from "./KaracaOSDebuggerTypes";
+import { AddToWatchParams, SocketEventHandlerParams, DebugStepParams, AddBreakpointParams, RemoveBreakpointParams, GetFilesParams, GetFileContentsParams, SocketEventCallbackResponse, RemoveFromWatchParams, EditItemOnWatchParams, GetRegisterValuesParams } from "./KaracaOSDebuggerTypes";
 
 const BASE_DIR = "/home/karacasoft/Documents/KaracaOS";
 
@@ -118,6 +118,15 @@ export function serveOnSocketIo() {
     errorHandledOnEvent('editItemOnWatch', async (params: EditItemOnWatchParams) => {
       return await gdbConnection.varAssign(params.name, params.expression);
     });
+
+    errorHandledOnEvent('getRegisterValues', async (params: GetRegisterValuesParams) => {
+      const results = await gdbConnection.dataListRegisterValues(true, params.format, ...params.registers);
+      return results;
+    });
+
+    errorHandledOnEvent('getRegisterNames', async () => {
+      return await gdbConnection.dataListRegisterNames();
+    })
 
     errorHandledOnEvent('getFiles', async (params: GetFilesParams) => {
       return await kaosBuilder.getFiles(params.dir);

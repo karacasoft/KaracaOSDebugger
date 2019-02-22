@@ -50,3 +50,8 @@ export interface EditItemOnWatchParams extends SocketEventHandlerParams {
   name: string;
   expression: string;
 }
+
+export interface GetRegisterValuesParams extends SocketEventHandlerParams {
+  format: 'x' | 'o' | 't' | 'd' | 'r' | 'N';
+  registers: number[];
+}
