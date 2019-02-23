@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { TableRow, TableCell, Typography } from '@material-ui/core';
+import { observer } from 'mobx-react';
 
 export type RegisterNameValue = {
   number: string;
@@ -15,6 +16,7 @@ interface RegistersItemState {
   
 }
 
+@observer
 class RegistersItem extends React.Component<RegistersItemProps, RegistersItemState> {
   
   constructor(props) {

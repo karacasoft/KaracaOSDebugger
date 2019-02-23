@@ -1,22 +1,15 @@
 import * as React from 'react';
-import { getRegisterValues } from '../../Service/debugService';
 import { Paper, Table, TableHead, TableRow, TableCell, TableBody, Typography } from '@material-ui/core';
 import RegistersItem from './RegistersItem';
-
-export type RegisterValueState = {
-  number: string;
-  value: string;
-}
+import { observer } from 'mobx-react';
+import { RegistersState, updateRegisterValues } from '../../StateManagers/RegistersState';
+import { IObservableObject } from 'mobx';
 
 interface RegistersProps {
-  registerNames?: string[];
+  registersData: RegistersState & IObservableObject;
 }
 
-interface RegistersState {
-  registerValues?: RegisterValueState[];
-}
-
-class Registers extends React.Component<RegistersProps, RegistersState> {
+@observer class Registers extends React.Component<RegistersProps> {
   
   constructor(props) {
     super(props);
@@ -25,20 +18,11 @@ class Registers extends React.Component<RegistersProps, RegistersState> {
   }
   
   componentDidMount() {
-    this.updateRegisterValues();
-  }
-  
-  updateRegisterValues() {
-    getRegisterValues().then(res => {
-      this.setState({
-        registerValues: res.results['register-values'],
-      });
-    }).catch(console.error);
+    updateRegisterValues();
   }
   
   render() {
-    const { registerNames } = this.props;
-    const { registerValues } = this.state;
+    const { registerNames, registerValues } = this.props.registersData;
     
     if(!registerNames || !registerValues) {
       return <Typography>Retrieving information...</Typography>;
@@ -53,7 +37,7 @@ class Registers extends React.Component<RegistersProps, RegistersState> {
           </TableRow> 
         </TableHead>
         <TableBody>
-          {this.state.registerValues.map((item, idx) => (<RegistersItem
+          {registerValues.map((item, idx) => (<RegistersItem
             key={idx}
             registerNameValue={{
               number: item.number,

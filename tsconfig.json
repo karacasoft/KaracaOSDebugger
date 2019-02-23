@@ -3,10 +3,11 @@
     "module" : "commonjs",
     "moduleResolution" : "node",
     "sourceMap" : true,
-    "jsx" : "React",
+    "jsx" : "react",
     "lib" : [ "dom", "es2015" ],
     "target" : "es2015",
-    "outDir" : "./build/"
+    "outDir" : "./build/",
+    "experimentalDecorators": true
   },
   "include" : [
     "src/**/*"

@@ -9,7 +9,7 @@ class KaracaOSBuildManager {
     }
     buildAll() {
         return new Promise((resolve, reject) => {
-            child_process_1.exec(`${this.baseDir}/build.sh all`, (err) => {
+            child_process_1.exec(`${this.baseDir}/build.sh all`, { cwd: this.baseDir }, (err) => {
                 if (err)
                     reject();
                 else
@@ -19,7 +19,7 @@ class KaracaOSBuildManager {
     }
     generateIso() {
         return new Promise((resolve, reject) => {
-            child_process_1.exec(`${this.baseDir}/iso.sh`, (err) => {
+            child_process_1.exec(`${this.baseDir}/iso.sh`, { cwd: this.baseDir }, (err) => {
                 if (err)
                     reject();
                 else
@@ -29,9 +29,9 @@ class KaracaOSBuildManager {
     }
     debug() {
         return new Promise((resolve, reject) => {
-            child_process_1.exec(`${this.baseDir}/qemu.sh`, (err) => {
+            child_process_1.exec(`${this.baseDir}/qemu.sh`, { cwd: this.baseDir }, (err) => {
                 if (err)
-                    reject();
+                    reject(err);
                 else
                     resolve();
             });

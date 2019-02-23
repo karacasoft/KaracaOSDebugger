@@ -12,6 +12,7 @@ const child_process_1 = require("child_process");
 const BufferUntilReadable_1 = require("./BufferUntilReadable");
 const events_1 = require("events");
 const Errors_1 = require("./Errors");
+const GdbResultParser_1 = require("./GdbResultParser");
 class GdbConnection extends events_1.EventEmitter {
     constructor(process) {
         super();
@@ -45,7 +46,7 @@ class GdbConnection extends events_1.EventEmitter {
                 const r = {
                     token: parseInt(result[1]),
                     class: result[2],
-                    results: result[3]
+                    results: GdbResultParser_1.parseResult(result[3])
                 };
                 this.emit('exec-result', r);
             }
@@ -53,7 +54,7 @@ class GdbConnection extends events_1.EventEmitter {
                 const r = {
                     token: parseInt(result[1]),
                     class: result[2],
-                    results: result[3]
+                    results: GdbResultParser_1.parseResult(result[3])
                 };
                 this.emit('status', r);
             }
@@ -61,7 +62,7 @@ class GdbConnection extends events_1.EventEmitter {
                 const r = {
                     token: parseInt(result[1]),
                     class: result[2],
-                    results: result[3]
+                    results: GdbResultParser_1.parseResult(result[3])
                 };
                 this.emit('notify', r);
             }
@@ -69,7 +70,7 @@ class GdbConnection extends events_1.EventEmitter {
                 const r = {
                     token: parseInt(result[1]),
                     class: result[2],
-                    results: result[3]
+                    results: GdbResultParser_1.parseResult(result[3])
                 };
                 this.emit('result', r);
             }
@@ -114,6 +115,14 @@ class GdbConnection extends events_1.EventEmitter {
             return this.sendCommand(`-exec-abort`);
         });
     }
+    listBreakpoints() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.sendCommand(`-break-info`)
+                .then(res => {
+                return res.results;
+            });
+        });
+    }
     loadSymbols(file) {
         return __awaiter(this, void 0, void 0, function* () {
             return this.sendCommand(`-file-symbol-file ${file}`);
@@ -129,6 +138,51 @@ class GdbConnection extends events_1.EventEmitter {
             }
         });
     }
+    removeBreakpoint(bpNum) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.sendCommand('-break-delete', `${bpNum}`);
+        });
+    }
+    stackInfoFrame() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.sendCommand('-stack-info-frame');
+        });
+    }
+    stackListFrames() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.sendCommand('-stack-list-frames');
+        });
+    }
+    varCreate(expr, name, frameAddr) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.sendCommand('-var-create', name ? name : '-', frameAddr ? frameAddr : '*', expr);
+        });
+    }
+    varDelete(name) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.sendCommand('-var-delete', name);
+        });
+    }
+    varAssign(name, expr) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.sendCommand('-var-assign', name, expr);
+        });
+    }
+    varUpdate(simpleValues, name) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.sendCommand('-var-update', simpleValues ? '--simple-values' : '--all-values', name ? name : '*');
+        });
+    }
+    dataListRegisterValues(skipUnavailable, format, ...regs) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.sendCommand('-data-list-register-values', (skipUnavailable) ? '--skip-unavailable' : '', (format) ? format : 'x', ...regs.map(reg => reg.toString()));
+        });
+    }
+    dataListRegisterNames(...regs) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.sendCommand('-data-list-register-names', ...regs.map(reg => reg.toString()));
+        });
+    }
     step(reverse) {
         return __awaiter(this, void 0, void 0, function* () {
             if (reverse) {
@@ -142,6 +196,16 @@ class GdbConnection extends events_1.EventEmitter {
     continue() {
         return __awaiter(this, void 0, void 0, function* () {
             return this.sendCommand('-exec-continue');
+        });
+    }
+    next() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.sendCommand('-exec-next');
+        });
+    }
+    finish() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.sendCommand('-exec-finish');
         });
     }
     target(host, port) {

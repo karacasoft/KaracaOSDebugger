@@ -15,6 +15,17 @@ const debugService_1 = require("../../Service/debugService");
 const styles = theme => ({
     dirTree: {}
 });
+const getFullPath = (item, items) => {
+    if (item.depth === 0) {
+        return '';
+    }
+    else if (item.depth === 1) {
+        return item.name;
+    }
+    else {
+        return `${getFullPath(items[item.parentIndex], items)}/${item.name}`;
+    }
+};
 class DirTree extends React.Component {
     constructor(props) {
         super(props);
@@ -30,17 +41,19 @@ class DirTree extends React.Component {
         };
         this.handleLoad = this.handleLoad.bind(this);
     }
-    handleLoad(itemIndex) {
+    handleDirLoad(itemIndex) {
         return __awaiter(this, void 0, void 0, function* () {
             const item = this.state.treeItems[itemIndex];
             let itemCount = this.state.treeItems.length;
+            const initialCount = itemCount;
             if (!item.loaded) {
                 try {
-                    const dirDesc = yield debugService_1.getFiles(item.name);
+                    const dirDesc = yield debugService_1.getFiles(getFullPath(item, this.state.treeItems));
                     const newItems = [
                         ...this.state.treeItems,
-                        ...dirDesc.files.map(val => {
-                            item.children = [...item.children, itemCount];
+                        ...dirDesc.files
+                            .filter(val => (val.isDir && !val.name.match(/(^\.|^sysroot$)/)) || val.name.match(/\.(c|S|h)$/))
+                            .map((val) => {
                             return ({
                                 index: itemCount++,
                                 name: val.name,
@@ -53,16 +66,30 @@ class DirTree extends React.Component {
                         })
                     ];
                     item.loaded = true;
+                    let children = Array(itemCount - initialCount).fill(0).map((_, idx) => initialCount + idx);
+                    item.children = children;
                     this.setState({
                         treeItems: newItems
                     });
                     return true;
                 }
                 catch (err) {
+                    console.error(err);
                     return false;
                 }
             }
-            return Promise.resolve(true);
+            return true;
+        });
+    }
+    handleLoad(itemIndex) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const item = this.state.treeItems[itemIndex];
+            if (item.isDir) {
+                return this.handleDirLoad(itemIndex);
+            }
+            else {
+                this.props.onLoadFile(getFullPath(item, this.state.treeItems));
+            }
         });
     }
     render() {

@@ -19,12 +19,12 @@ const styles = {
     },
 };
 function ButtonAppBar(props) {
-    const { classes } = props;
+    const { classes, onDebug, onContinue, onStepOver, onStepInto, onStepOut } = props;
     return (React.createElement("div", { className: classes.root },
         React.createElement(AppBar_1.default, { position: "fixed" },
             React.createElement(Toolbar_1.default, null,
                 React.createElement(Typography_1.default, { variant: "h6", color: "inherit", className: classes.grow }, "KaracaOS Debugger"),
-                React.createElement(DebugButtons_1.default, null)))));
+                React.createElement(DebugButtons_1.default, { onDebug: onDebug, onContinue: onContinue, onStepOver: onStepOver, onStepInto: onStepInto, onStepOut: onStepOut })))));
 }
 exports.default = styles_1.withStyles(styles)(ButtonAppBar);
 //# sourceMappingURL=AppBar.js.map

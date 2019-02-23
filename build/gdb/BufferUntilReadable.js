@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const events_1 = require("events");
 class BufferUntilReadable extends events_1.EventEmitter {
-    constructor(readable, bufferUntil, bufferSize = 1024) {
+    constructor(readable, bufferUntil, bufferSize = 1024 * 100) {
         super();
         this.readable = readable;
         this.buffer = Buffer.alloc(bufferSize, 0);

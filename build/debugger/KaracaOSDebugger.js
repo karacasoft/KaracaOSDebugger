@@ -10,75 +10,110 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const GdbConnector_1 = require("../gdb/GdbConnector");
 const KaracaOSBuildManager_1 = require("../karacaos_builder/KaracaOSBuildManager");
-const BASE_DIR = "/home/karacasoft/KaracaOS";
+const BASE_DIR = "/home/karacasoft/Documents/KaracaOS";
+const kaosBuilder = new KaracaOSBuildManager_1.default({
+    baseDir: BASE_DIR
+});
+let gdbConnection = null;
 function serveOnSocketIo() {
     return (socket) => __awaiter(this, void 0, void 0, function* () {
-        const kaosBuilder = new KaracaOSBuildManager_1.default({
-            baseDir: "/home/karacasoft/KaracaOS"
-        });
-        const gdbConnection = yield GdbConnector_1.default.start();
+        if (gdbConnection === null) {
+            gdbConnection = yield GdbConnector_1.default.start();
+        }
         yield gdbConnection.loadSymbols(`${BASE_DIR}/kernel/karacaos.kernel`);
-        socket.on('build', (callback) => __awaiter(this, void 0, void 0, function* () {
-            try {
-                yield kaosBuilder.buildAll();
-                yield kaosBuilder.generateIso();
-                callback({ success: true });
-            }
-            catch (err) {
-                console.error(err);
-                callback({ success: false });
-            }
+        gdbConnection.on("exec-result", ev => {
+            socket.emit('exec-result', ev);
+            console.log("exec-result");
+            console.log(ev);
+        });
+        gdbConnection.on("status", ev => {
+            console.log("status");
+            console.log(ev);
+        });
+        gdbConnection.on("notify", ev => {
+            console.log("notify");
+            console.log(ev);
+        });
+        gdbConnection.on("console", ev => {
+            console.log("console");
+            console.log(ev);
+        });
+        gdbConnection.on("target", ev => {
+            console.log("target");
+            console.log(ev);
+        });
+        gdbConnection.on("log", ev => {
+            console.log("log");
+            console.log(ev);
+        });
+        function errorHandledOnEvent(event, handler) {
+            socket.on(event, (params, callback) => __awaiter(this, void 0, void 0, function* () {
+                try {
+                    const results = yield handler(params);
+                    callback({ success: true, results: results });
+                }
+                catch (err) {
+                    console.error(err);
+                    callback({ success: false, error: err });
+                }
+            }));
+        }
+        errorHandledOnEvent('build', () => __awaiter(this, void 0, void 0, function* () {
+            yield kaosBuilder.buildAll();
+            yield kaosBuilder.generateIso();
         }));
-        socket.on('debug', (callback) => __awaiter(this, void 0, void 0, function* () {
-            try {
-                yield kaosBuilder.debug();
-                yield gdbConnection.target('localhost', 1234);
-                callback({ success: true });
-            }
-            catch (err) {
-                console.error(err);
-                callback({ success: false });
-            }
+        errorHandledOnEvent('debug', () => __awaiter(this, void 0, void 0, function* () {
+            yield kaosBuilder.debug();
+            yield gdbConnection.target('localhost', 1234);
         }));
-        socket.on('debugStart', (callback) => __awaiter(this, void 0, void 0, function* () {
-            try {
-                yield gdbConnection.continue();
-                callback({ success: true });
-            }
-            catch (err) {
-                console.error(err);
-                callback({ success: false });
-            }
+        errorHandledOnEvent('debugStart', () => __awaiter(this, void 0, void 0, function* () {
+            yield gdbConnection.continue();
         }));
-        socket.on('addBreakpoint', (fileName, lineNumber, callback) => __awaiter(this, void 0, void 0, function* () {
-            try {
-                yield gdbConnection.addBreakpoint(fileName, lineNumber);
-                callback({ success: true });
-            }
-            catch (err) {
-                console.error(err);
-                callback({ success: false });
-            }
+        errorHandledOnEvent('debugNext', () => __awaiter(this, void 0, void 0, function* () {
+            yield gdbConnection.next();
         }));
-        socket.on('getFiles', (dir, callback) => __awaiter(this, void 0, void 0, function* () {
-            try {
-                const files = yield kaosBuilder.getFiles(dir);
-                callback({ success: true, files });
-            }
-            catch (err) {
-                console.error(err);
-                callback({ success: false });
-            }
+        errorHandledOnEvent('debugStep', (params) => __awaiter(this, void 0, void 0, function* () {
+            yield gdbConnection.step(params.reverse);
         }));
-        socket.on('getFileContents', (file, callback) => __awaiter(this, void 0, void 0, function* () {
-            try {
-                const fileContents = yield kaosBuilder.getFileContents(file);
-                callback({ success: true, fileContents });
-            }
-            catch (err) {
-                console.error(err);
-                callback({ success: false });
-            }
+        errorHandledOnEvent('debugFinish', () => __awaiter(this, void 0, void 0, function* () {
+            yield gdbConnection.finish();
+        }));
+        errorHandledOnEvent('addBreakpoint', (params) => __awaiter(this, void 0, void 0, function* () {
+            yield gdbConnection.addBreakpoint(params.fileName, params.lineNumber);
+        }));
+        errorHandledOnEvent('removeBreakpoint', (params) => __awaiter(this, void 0, void 0, function* () {
+            yield gdbConnection.removeBreakpoint(params.bpNum);
+        }));
+        errorHandledOnEvent('getBreakpoints', () => __awaiter(this, void 0, void 0, function* () {
+            return yield gdbConnection.listBreakpoints();
+        }));
+        errorHandledOnEvent('getStackInfo', () => __awaiter(this, void 0, void 0, function* () {
+            return yield gdbConnection.stackListFrames();
+        }));
+        errorHandledOnEvent('addToWatch', (params) => __awaiter(this, void 0, void 0, function* () {
+            return yield gdbConnection.varCreate(params.expression, params.name, '@');
+        }));
+        errorHandledOnEvent('removeFromWatch', (params) => __awaiter(this, void 0, void 0, function* () {
+            return yield gdbConnection.varDelete(params.name);
+        }));
+        errorHandledOnEvent('watchUpdate', () => __awaiter(this, void 0, void 0, function* () {
+            return yield gdbConnection.varUpdate(false);
+        }));
+        errorHandledOnEvent('editItemOnWatch', (params) => __awaiter(this, void 0, void 0, function* () {
+            return yield gdbConnection.varAssign(params.name, params.expression);
+        }));
+        errorHandledOnEvent('getRegisterValues', (params) => __awaiter(this, void 0, void 0, function* () {
+            const results = yield gdbConnection.dataListRegisterValues(true, params.format, ...params.registers);
+            return results;
+        }));
+        errorHandledOnEvent('getRegisterNames', () => __awaiter(this, void 0, void 0, function* () {
+            return yield gdbConnection.dataListRegisterNames();
+        }));
+        errorHandledOnEvent('getFiles', (params) => __awaiter(this, void 0, void 0, function* () {
+            return yield kaosBuilder.getFiles(params.dir);
+        }));
+        errorHandledOnEvent('getFileContents', (params) => __awaiter(this, void 0, void 0, function* () {
+            return yield kaosBuilder.getFileContents(params.file);
         }));
     });
 }

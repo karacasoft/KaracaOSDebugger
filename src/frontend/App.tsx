@@ -8,12 +8,14 @@ import AppBar from './Components/AppBar/AppBar';
 
 import './global.css';
 import DirTree from './Components/DirTree/DirTree';
-import { socket, getFileContents, getBreakpoints, addBreakpoint, removeBreakpoint, debugStart, debugContinue, onExecResultFunction, debugNext, debugStep, debugFinish, getStackInfo, getRegisterValues, getRegisterNames } from './Service/debugService';
+import { socket, getFileContents, getBreakpoints, addBreakpoint, removeBreakpoint, debugStart, debugContinue, onExecResultFunction, debugNext, debugStep, debugFinish, getStackInfo } from './Service/debugService';
 import BreakpointList, { Breakpoint } from './Components/BreakpointList/BreakpointList';
 import EventLog from './Components/EventLog/EventLog';
 import RightSideBar from './Components/RightSideBar/RightSideBar';
 import Watch from './Components/Watch/Watch';
 import Registers from './Components/Registers/Registers';
+import * as RegistersStateManager from './StateManagers/RegistersState';
+import * as WatchStateManager from './StateManagers/WatchState';
 
 const styles = (_) => ({
   marginTop: {
@@ -35,7 +37,7 @@ interface BreakpointsState {
 }
 
 interface Props {
-  classes: any
+  classes: any;
 }
 
 interface ExecState {
@@ -50,14 +52,9 @@ interface State {
   breakpoint: BreakpointsState;
   selectedFile: string | undefined;
   execState: ExecState;
-  
-  registerNames?: string[];
 }
 
 class App extends React.Component<Props, State> {
-
-  private watchRef: React.RefObject<Watch>;
-  private registersRef: React.RefObject<Registers>;
 
   constructor(props: Props) {
     super(props);
@@ -74,13 +71,11 @@ class App extends React.Component<Props, State> {
     };
 
     this.handleLoadFile = this.handleLoadFile.bind(this);
-    this.watchRef = React.createRef();
-    this.registersRef = React.createRef();
   }
 
   componentDidMount() {
     this.refreshBreakpoints();
-    this.refreshRegisterNames();
+    RegistersStateManager.updateRegisterNames();
     socket.on("reconnect", () => {
       this.refreshBreakpoints();
     });
@@ -97,8 +92,8 @@ class App extends React.Component<Props, State> {
         this.handleLoadFile(ev.results.frame.file);
         getStackInfo().then(res => { console.log(res); })
           .catch(err => console.error(err));
-        if(this.registersRef.current) this.registersRef.current.updateRegisterValues();
-        if(this.watchRef.current) this.watchRef.current.updateVars();
+        RegistersStateManager.updateRegisterValues();
+        WatchStateManager.updateValues();
       };
       
       if(ev.results.reason && ev.results.reason === "exited-normally") {
@@ -121,14 +116,6 @@ class App extends React.Component<Props, State> {
         });
       }
     })
-  }
-
-  refreshRegisterNames() {
-    getRegisterNames().then(res => {
-      this.setState({
-        registerNames: res.results['register-names'],
-      });
-    }).catch(console.error);
   }
 
   refreshBreakpoints() {
@@ -298,8 +285,8 @@ ${err.stack}`,
               breakpoints={this.state.breakpoint.list}
               onClickBreakpoint={this.handleBreakpointClick}
             />
-            <Watch ref={this.watchRef} />
-            <Registers registerNames={this.state.registerNames} ref={this.registersRef} />
+            <Watch watchState={WatchStateManager.watchState}/>
+            <Registers registersData={RegistersStateManager.registersState} />
           </RightSideBar>
         </Grid>
       </Grid>

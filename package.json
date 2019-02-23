@@ -19,6 +19,8 @@
     "@material-ui/icons": "^3.0.1",
     "codemirror": "^5.41.0",
     "material-ui": "^1.0.0-beta.47",
+    "mobx": "^5.9.0",
+    "mobx-react": "^5.4.3",
     "react": "^16.5.2",
     "react-codemirror2": "^5.1.0",
     "react-dom": "^16.5.2",

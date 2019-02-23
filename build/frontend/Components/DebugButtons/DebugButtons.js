@@ -17,9 +17,13 @@ class DebugButtons extends React.Component {
     }
     render() {
         return React.createElement("div", null,
-            React.createElement(Button_1.default, { variant: "contained", color: "primary", className: this.props.classes.button }, "Debug"),
+            React.createElement(Button_1.default, { variant: "contained", color: "secondary", className: this.props.classes.button, onClick: this.props.onDebug }, "Debug"),
+            React.createElement(Button_1.default, { variant: "contained", className: this.props.classes.button, onClick: this.props.onContinue }, "Continue"),
+            React.createElement(Button_1.default, { variant: "contained", className: this.props.classes.button, onClick: this.props.onStepOver }, "Step Over"),
+            React.createElement(Button_1.default, { variant: "contained", className: this.props.classes.button, onClick: this.props.onStepInto }, "Step Into"),
+            React.createElement(Button_1.default, { variant: "contained", className: this.props.classes.button, onClick: this.props.onStepOut }, "Step Out"),
             React.createElement(Button_1.default, { variant: "contained", className: this.props.classes.button }, "Build All"),
-            React.createElement(Button_1.default, { variant: "contained", color: "secondary", className: this.props.classes.button }, "Stop"));
+            React.createElement(Button_1.default, { variant: "contained", className: this.props.classes.button }, "Stop"));
     }
 }
 exports.default = styles_1.withStyles(styles)(DebugButtons);
