@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Table, Paper, TableHead, TableRow, TableCell, TableBody } from '@material-ui/core';
 import BreakpointListItem from './BreakpointListItem';
 import * as BreakpointsStateManager from '../../StateManagers/BreakpointsState';
+import { observer } from 'mobx-react';
 
 
 interface Props {
@@ -13,7 +14,7 @@ interface State {
 
 }
 
-class BreakpointList extends React.Component<Props, State> {
+@observer class BreakpointList extends React.Component<Props, State> {
 
   constructor(props: Props) {
     super(props);

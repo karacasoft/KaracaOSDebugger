@@ -9,6 +9,7 @@ require('codemirror/mode/clike/clike');
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/theme/material.css';
 import { BreakpointsState } from '../../StateManagers/BreakpointsState';
+import { observer } from 'mobx-react';
 
 interface Props {
   value: string;
@@ -42,7 +43,7 @@ const styles = (theme: Theme) => {
   }
 });}
 
-class CodeDisplay extends React.Component<Props, State> {
+@observer class CodeDisplay extends React.Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
