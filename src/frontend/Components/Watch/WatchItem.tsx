@@ -16,7 +16,7 @@ interface WatchItemState {
 
 class WatchItem extends React.Component<WatchItemProps, WatchItemState> {
   
-  constructor(props) {
+  constructor(props: WatchItemProps) {
     super(props);
     this.state = {
     };

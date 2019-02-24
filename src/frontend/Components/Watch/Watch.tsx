@@ -19,7 +19,7 @@ interface WatchProps {
 
 @observer class Watch extends React.Component<WatchProps> {
   
-  constructor(props) {
+  constructor(props: WatchProps) {
     super(props);
   }
   

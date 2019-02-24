@@ -8,11 +8,11 @@ const BASE_DIR = "/home/karacasoft/Documents/KaracaOS";
 const kaosBuilder: KaracaOSBuildManager = new KaracaOSBuildManager({
   baseDir: BASE_DIR
 });
-let gdbConnection: GdbConnection = null;
+let gdbConnection: GdbConnection;
 
 export function serveOnSocketIo() {
-  return async (socket) => {
-    if(gdbConnection === null) {
+  return async (socket: any) => {
+    if(gdbConnection === null || gdbConnection === undefined) {
       gdbConnection = await GdbConnection.start();
     }
 

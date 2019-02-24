@@ -4,7 +4,7 @@ import { Typography, TextField } from '@material-ui/core';
 interface EditableTextProps {
   label?: string;
   value: string;
-  onChange: (value) => void;
+  onChange: (value: string) => void;
   alwaysEditing?: boolean;
 }
 
@@ -16,21 +16,23 @@ class EditableText extends React.Component<EditableTextProps, EditableTextState>
   
   private textFieldRef: React.RefObject<HTMLInputElement>;
   
-  constructor(props) {
+  constructor(props: EditableTextProps) {
     super(props);
     this.state = {
-      editing: this.props.alwaysEditing,
+      editing: this.props.alwaysEditing || false,
     };
     this.textFieldRef = React.createRef();
   }
   
-  handleKeyDown = (ev) => {
+  handleKeyDown = (ev: React.KeyboardEvent) => {
     if(ev.keyCode === 13) {
       this.setState({
-        editing: this.props.alwaysEditing,
+        editing: this.props.alwaysEditing || false,
       });
-      this.props.onChange(this.textFieldRef.current.value.trim());
-      this.textFieldRef.current.value = "";
+      if(this.textFieldRef.current !== null) {
+        this.props.onChange(this.textFieldRef.current.value.trim());
+        this.textFieldRef.current.value = "";
+      }
     }
   }
   

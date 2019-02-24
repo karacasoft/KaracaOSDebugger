@@ -1,47 +1,21 @@
 import * as React from 'react';
 import CollapsableListItem from './CollapsableListItem';
-import { withStyles } from '@material-ui/core/styles';
-import { getFiles } from '../../Service/debugService';
+import { withStyles, createStyles, Theme } from '@material-ui/core/styles';
+import * as FilesStateManager from '../../StateManagers/FilesState';
 
-const styles = theme => ({
+const styles = (theme: Theme) => createStyles({
   dirTree: {
   }
 });
 
-export interface TreeItem {
-  index: number;
-  name: string;
-  title: string;
-  depth: number;
-  loaded: boolean;
-  isDir: boolean;
-  children?: number[];
-  parentIndex?: number;
-  disabled?: boolean;
-}
-
 interface Props {
   classes: any;
-  onLoadFile: (filename: string) => void;
+  filesState: FilesStateManager.FilesState;
 }
 
-interface State {
-  treeItems: TreeItem[];
-}
+class DirTree extends React.Component<Props> {
 
-const getFullPath = (item: TreeItem, items: TreeItem[]) => {
-  if(item.depth === 0) {
-    return '';
-  } else if(item.depth === 1) {
-    return item.name;
-  } else {
-    return `${getFullPath(items[item.parentIndex], items)}/${item.name}`;
-  }
-}
-
-class DirTree extends React.Component<Props, State> {
-
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.state = {
       treeItems: [{
@@ -56,63 +30,20 @@ class DirTree extends React.Component<Props, State> {
     this.handleLoad = this.handleLoad.bind(this);
   }
 
-  async handleDirLoad(itemIndex: number): Promise<boolean> {
-
-    const item = this.state.treeItems[itemIndex];
-    let itemCount = this.state.treeItems.length;
-    const initialCount = itemCount;
-    if(!item.loaded) {
-      try {
-        const dirDesc: any = await getFiles(getFullPath(item, this.state.treeItems));
-        const newItems: TreeItem[] = [
-          ...this.state.treeItems,
-          ...dirDesc.files
-            .filter(val => (val.isDir && !val.name.match(/(^\.|^sysroot$)/)) || val.name.match(/\.(c|S|h)$/))
-            .map((val): TreeItem => {
-              return ({
-                index: itemCount++,
-                name: val.name,
-                title: val.name,
-                loaded: !val.isDir,
-                isDir: val.isDir,
-                depth: item.depth + 1,
-                parentIndex: item.index
-              });
-            })
-        ];
-
-        item.loaded = true;
-        let children: number[] = Array(itemCount - initialCount).fill(0).map((_, idx) => initialCount + idx);
-        item.children = children;
-        this.setState({
-          treeItems: newItems
-        });
-
-        return true;
-      } catch (err) {
-        console.error(err);
-        return false;
-      }
-
-    }
-    return true;
-  }
-
-  async handleLoad(itemIndex: number): Promise<boolean> {
-    const item = this.state.treeItems[itemIndex];
+  handleLoad(itemIndex: number) {
+    const item = this.props.filesState.dirTree[itemIndex];
     if(item.isDir) {
-      return this.handleDirLoad(itemIndex);
+      FilesStateManager.loadDirectory(itemIndex);
     } else {
-      this.props.onLoadFile(getFullPath(item, this.state.treeItems))
+      FilesStateManager.loadFileByIndex(itemIndex);
     }
   }
 
   render() {
     return (<div className={this.props.classes.dirTree}>
       <CollapsableListItem
-        items={this.state.treeItems}
-        rootItem={this.state.treeItems[0]}
-        children={this.state.treeItems[0].children}
+        filesState={this.props.filesState}
+        rootItem={this.props.filesState.dirTree[0]}
         onLoad={this.handleLoad}/>
     </div>);
   }

@@ -1,8 +1,11 @@
 function cStringToNormalString(cstring: string): string {
-  return cstring.match(/^\"(.*)\"$/)[1]
-    .replace("\\n", "\n")
-    .replace("\\r", "")
-    .replace("\\\"", "\"");
+  const matches = cstring.match(/^\"(.*)\"$/);
+  if(matches && matches.length >= 1)
+    return matches[1]
+      .replace("\\n", "\n")
+      .replace("\\r", "")
+      .replace("\\\"", "\"");
+  else return "";
 }
 
 function split(results: string): string[] {
@@ -40,14 +43,17 @@ function parseList(list: string): any {
   if(list === "[]") {
     return [];
   } else {
-    return split(list.match(/^\[(.*)\]$/)[1])
-      .map(val => {
-        if(val.match(/^("|{|\[)/)) {
-          return parseValue(val);
-        } else {
-          return parseResult(val);
-        }
-      });
+    const matches = list.match(/^\[(.*)\]$/);
+    if(matches && matches.length >= 1)
+      return split(matches[1])
+        .map(val => {
+          if(val.match(/^("|{|\[)/)) {
+            return parseValue(val);
+          } else {
+            return parseResult(val);
+          }
+        });
+    else return [];
   }
 }
 
@@ -55,7 +61,8 @@ function parseTuple(tuple: string): any {
   if(tuple === "{}") {
     return {};
   } else {
-    return parseResult(tuple.match(/^{(.+)}$/)[1]);
+    const matches = tuple.match(/^{(.+)}$/);
+    if(matches && matches.length >= 1) return parseResult(matches[1]);
   }
 }
 
@@ -80,10 +87,12 @@ export function parseResult(results: string | null | undefined): any {
   resultsArr.map(result => result.trim())
     .forEach(result => {
       const keyValue = result.match(/^(.+?)=(.+)$/);
-      resultsObj = {
-        ...resultsObj,
-        [keyValue[1]]: parseValue(keyValue[2])
-      };
+      if(keyValue) {
+        resultsObj = {
+          ...resultsObj,
+          [keyValue[1]]: parseValue(keyValue[2])
+        };
+      }
     });
   return resultsObj;
 }

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles, WithStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
@@ -22,7 +22,15 @@ const styles = {
   },
 };
 
-function ButtonAppBar(props) {
+export interface ButtonAppBarProps extends WithStyles<typeof styles> {
+  onDebug: () => void;
+  onContinue: () => void;
+  onStepOver: () => void;
+  onStepInto: () => void;
+  onStepOut: () => void;
+}
+
+function ButtonAppBar(props: ButtonAppBarProps) {
   const { classes, onDebug, onContinue, onStepOver, onStepInto, onStepOut } = props;
   return (
     <div className={classes.root}>

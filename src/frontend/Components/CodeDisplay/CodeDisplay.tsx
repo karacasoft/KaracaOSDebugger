@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles, Theme } from '@material-ui/core/styles';
 
 import { Controlled as CodeMirror, IInstance } from 'react-codemirror2';
 
@@ -8,13 +8,13 @@ require('codemirror/mode/clike/clike');
 
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/theme/material.css';
-import { Breakpoint } from '../BreakpointList/BreakpointList';
+import { BreakpointsState } from '../../StateManagers/BreakpointsState';
 
 interface Props {
   value: string;
   execLine?: number;
   mode: string;
-  breakpoints: Breakpoint[];
+  breakpointsState: BreakpointsState;
   onAddBreakpoint: (lineNum: number) => void;
   onRemoveBreakpoint: (bpNum: number) => void;
 
@@ -25,7 +25,7 @@ interface State {
   editor: IInstance | null;
 }
 
-const styles = theme => {
+const styles = (theme: Theme) => {
   return ({
   codeDisplay: {
     height: "100%"
@@ -55,9 +55,11 @@ class CodeDisplay extends React.Component<Props, State> {
     if(this.state.editor !== null) {
       if(prevProps.execLine) this.state.editor.removeLineClass(prevProps.execLine - 1, "background");
       
-      this.props.breakpoints.filter(br => br.deleted !== true).forEach(br => {
-        this.state.editor.addLineClass(br.lineNum - 1, "background", this.props.classes.breakpointMarker);
-        this.state.editor.addLineClass(br.lineNum - 1, "gutter", this.props.classes.breakpointGutter);
+      this.props.breakpointsState.list.filter(br => br.deleted !== true).forEach(br => {
+        if(this.state.editor !== null) {
+          this.state.editor.addLineClass(br.lineNum - 1, "background", this.props.classes.breakpointMarker);
+          this.state.editor.addLineClass(br.lineNum - 1, "gutter", this.props.classes.breakpointGutter);
+        }
       });
       
       if(this.props.execLine) this.state.editor
@@ -78,7 +80,7 @@ class CodeDisplay extends React.Component<Props, State> {
         editor.setSize(null, "100%");
       }}
       onGutterClick={(editor, lineNumber, gutter, event) => {
-        const bpFiltered = this.props.breakpoints.filter(br => br.lineNum === lineNumber + 1)
+        const bpFiltered = this.props.breakpointsState.list.filter(br => br.lineNum === lineNumber + 1)
         if(bpFiltered.length >= 1) {
           bpFiltered[0].deleted = true;
           editor.removeLineClass(lineNumber, "background");

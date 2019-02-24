@@ -38,14 +38,14 @@ export function addWatchItem(expr: string) {
 }
 
 export function editWatchItem(i: number, expr: string) {
+  const item = watchState.watchItems[i];
   if(expr === "") {
-    removeFromWatch(watchState.watchItems[i].name).then(res => {
+    if(item.name) removeFromWatch(item.name).then(_ => {
       runInAction(() => watchState.watchItems = watchState.watchItems.filter((_, idx) => idx !== i));
     }).catch(console.error);
   } else {
-    removeFromWatch(watchState.watchItems[i].name).then(res => {
+    if(item.name) removeFromWatch(item.name).then(_ => {
       addToWatch(expr).then(res => {
-        console.log(res);
         runInAction(() => watchState.watchItems = watchState.watchItems.map((item, idx) => ({
           ...item,
           ...res.results,
@@ -60,7 +60,7 @@ export function updateValues() {
   watchUpdate().then(res => {
     const changeList = res.results.changelist;
     let lastList = [ ...watchState.watchItems ];
-    changeList.forEach(change => {
+    changeList.forEach((change: any) => {
       if(lastList.find(el => el.name === change.name)) {
         lastList = lastList.map(val => {
           if(change.name === val.name) {

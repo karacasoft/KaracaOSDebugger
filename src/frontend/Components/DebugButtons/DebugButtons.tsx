@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import Button from '@material-ui/core/Button';
 
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles, Theme } from '@material-ui/core/styles';
 
 interface Props {
   onDebug: () => void;
@@ -18,14 +18,14 @@ interface State {
   waitingResult: boolean;
 }
 
-const styles = theme => ({
+const styles = (theme: Theme) => ({
   button: {
     margin: theme.spacing.unit
   }
 });
 
 class DebugButtons extends React.Component<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.state = {
       waitingResult: false

@@ -12,14 +12,14 @@ interface RightSideBarState {
 
 class RightSideBar extends React.Component<RightSideBarProps, RightSideBarState> {
   
-  constructor(props) {
+  constructor(props: RightSideBarProps) {
     super(props);
     this.state = {
       activeTab: 0,
     };
   }
   
-  handleChangeTab = (ev, value) => {
+  handleChangeTab = (ev: any, value: number) => {
     this.setState({
       activeTab: value,
     });

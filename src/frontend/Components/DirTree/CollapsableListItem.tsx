@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import Collapse from '@material-ui/core/Collapse';
-import { TreeItem } from './DirTree';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -9,75 +8,57 @@ import ListItemText from '@material-ui/core/ListItemText';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import * as FilesStateManager from '../../StateManagers/FilesState';
+import { observer } from 'mobx-react';
 
 interface Props {
-  items: TreeItem[];
-  rootItem: TreeItem;
-  children: number[];
-  onLoad: (itemIndex: number) => Promise<boolean>;
+  filesState: FilesStateManager.FilesState;
+  rootItem: FilesStateManager.DirTreeItem;
+  onLoad: (index: number) => void;
 }
 
-interface State {
-  open: boolean;
-  error: boolean;
-  loading: boolean;
-}
+@observer class CollapsableListItem extends React.Component<Props> {
 
-class CollapsableListItem extends React.Component<Props, State> {
-
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
-    this.state = {
-      open: false,
-      error: false,
-      loading: false
-    };
     this.handleClick = this.handleClick.bind(this);
   }
 
   handleClick() {
-    if(!this.props.children) {
-      this.props.onLoad(this.props.rootItem.index)
-        .then(res => {
-          if(res) {
-            this.setState({
-              open: true,
-              error: false,
-              loading: false
-            });
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          this.setState({
-            open: false,
-            error: true,
-            loading: false
-          });
-        });
+    const dirTree = this.props.filesState.dirTree;
+    const rootItem = this.props.rootItem;
+    if(dirTree[rootItem.index].loading) {
+      return;
     }
-    this.setState({
-      open: !this.state.open
-    });
+    if(!dirTree[rootItem.index].loaded) {
+      this.props.onLoad(rootItem.index);
+      FilesStateManager.openDirectory(rootItem.index);
+      return;
+    }
+    if(dirTree[rootItem.index].open) {
+      FilesStateManager.closeDirectory(rootItem.index);
+    } else {
+      FilesStateManager.openDirectory(rootItem.index);
+    }
   }
 
   render() {
+    const { rootItem, filesState } = this.props;
     return ([
         <ListItem key="collapseItem" button onClick={this.handleClick} style={{paddingLeft: (this.props.rootItem.depth - 1) * 8}}>
           <ListItemText inset primary={this.props.rootItem.title} />
-          {this.state.open ? <ExpandLess color="action" /> : <ExpandMore color="action" />}
+          {rootItem.open ? <ExpandLess color="action" /> : <ExpandMore color="action" />}
         </ListItem>,
-        <Collapse key="collapse" in={this.state.open}>
+        <Collapse key="collapse" in={rootItem.open}>
           <List component="div">
-            {this.props.children ?
-              this.props.children
-              .map(cIndex => this.props.items[cIndex])
+            {rootItem.children ?
+              rootItem.children
+              .map(cIndex => filesState.dirTree[cIndex])
               .map(val => {
                 if(val.isDir)
                   return (<CollapsableListItem
                     key={val.index}
-                    items={this.props.items}
-                    children={val.children}
+                    filesState={filesState}
                     rootItem={val}
                     onLoad={this.props.onLoad}
                   />);

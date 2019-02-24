@@ -11,7 +11,7 @@ interface RegistersProps {
 
 @observer class Registers extends React.Component<RegistersProps> {
   
-  constructor(props) {
+  constructor(props: RegistersProps) {
     super(props);
     this.state = {
     };

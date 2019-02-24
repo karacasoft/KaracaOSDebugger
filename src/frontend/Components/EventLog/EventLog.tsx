@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { createStyles, withStyles, Paper, WithStyles, Typography } from '@material-ui/core';
+import { createStyles, withStyles, Paper, WithStyles, Typography, Theme } from '@material-ui/core';
 
-const styles = _ => createStyles({
+const styles = (_: Theme) => createStyles({
   "root": {
     width: "100%",
     color: "white",

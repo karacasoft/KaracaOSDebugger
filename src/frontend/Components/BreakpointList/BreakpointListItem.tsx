@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { Breakpoint } from './BreakpointList';
 import { TableRow, TableCell } from '@material-ui/core';
+import { Breakpoint } from '../../StateManagers/BreakpointsState';
 
 interface Props {
   breakpoint: Breakpoint;
@@ -12,7 +12,7 @@ interface State {
 }
 
 class BreakpointListItem extends React.Component<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
   }
 

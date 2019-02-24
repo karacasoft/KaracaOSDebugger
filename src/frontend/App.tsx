@@ -2,22 +2,25 @@ import * as React from 'react';
 
 import CodeDisplay from './Components/CodeDisplay/CodeDisplay';
 
-import { Grid } from '@material-ui/core';
+import { Grid, Theme } from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
 import AppBar from './Components/AppBar/AppBar';
 
 import './global.css';
 import DirTree from './Components/DirTree/DirTree';
-import { socket, getFileContents, getBreakpoints, addBreakpoint, removeBreakpoint, debugStart, debugContinue, onExecResultFunction, debugNext, debugStep, debugFinish, getStackInfo } from './Service/debugService';
-import BreakpointList, { Breakpoint } from './Components/BreakpointList/BreakpointList';
+import { socket, getFileContents, removeBreakpoint, debugStart, debugContinue, onExecResultFunction, debugNext, debugStep, debugFinish, getStackInfo } from './Service/debugService';
+import BreakpointList from './Components/BreakpointList/BreakpointList';
 import EventLog from './Components/EventLog/EventLog';
 import RightSideBar from './Components/RightSideBar/RightSideBar';
 import Watch from './Components/Watch/Watch';
 import Registers from './Components/Registers/Registers';
 import * as RegistersStateManager from './StateManagers/RegistersState';
 import * as WatchStateManager from './StateManagers/WatchState';
+import * as BreakpointsStateManager from './StateManagers/BreakpointsState';
+import * as FilesStateManager from './StateManagers/FilesState';
+import { observer } from 'mobx-react';
 
-const styles = (_) => ({
+const styles = (_: Theme) => ({
   marginTop: {
     marginTop: 64,
   },
@@ -31,10 +34,6 @@ const styles = (_) => ({
   }
 });
 
-interface BreakpointsState {
-  list: Breakpoint[],
-  loading: boolean
-}
 
 interface Props {
   classes: any;
@@ -48,39 +47,28 @@ interface ExecState {
 }
 
 interface State {
-  editorContents: string;
-  breakpoint: BreakpointsState;
-  selectedFile: string | undefined;
   execState: ExecState;
 }
 
-class App extends React.Component<Props, State> {
+@observer class App extends React.Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
     this.state = {
-      editorContents: "Select a file from file explorer...",
-      breakpoint: {
-        list: [],
-        loading: false
-      },
-      selectedFile: undefined,
       execState: {
         state: "stopped"
       }
     };
-
-    this.handleLoadFile = this.handleLoadFile.bind(this);
   }
 
   componentDidMount() {
-    this.refreshBreakpoints();
+    BreakpointsStateManager.refreshBreakpoints();
     RegistersStateManager.updateRegisterNames();
     socket.on("reconnect", () => {
-      this.refreshBreakpoints();
+      BreakpointsStateManager.refreshBreakpoints();
     });
     onExecResultFunction(ev => {
-      const onPaused = (ev) => {
+      const onPaused = (ev: any) => {
         this.setState({
           execState: {
             state: "paused",
@@ -89,7 +77,7 @@ class App extends React.Component<Props, State> {
             line: parseInt(ev.results.frame.line),
           },
         });
-        this.handleLoadFile(ev.results.frame.file);
+        FilesStateManager.loadFile(ev.results.frame.file);
         getStackInfo().then(res => { console.log(res); })
           .catch(err => console.error(err));
         RegistersStateManager.updateRegisterValues();
@@ -118,102 +106,16 @@ class App extends React.Component<Props, State> {
     })
   }
 
-  refreshBreakpoints() {
-    this.setState({
-      breakpoint: {
-        list: this.state.breakpoint.list,
-        loading: true
-      }
-    });
-    getBreakpoints()
-      .then(res => {
-        this.setState({
-          breakpoint: {
-            list: res.body.map((br): Breakpoint => ({
-              num: br.bkpt.number,
-              type: br.bkpt.type,
-              enabled: br.bkpt.enabled,
-              disp: br.bkpt.disp,
-              addr: br.bkpt.addr,
-              file: br.bkpt.file,
-              lineNum: br.bkpt.line
-            })),
-            loading: false
-          }
-        });
-
-      })
-      .catch(err => {
-        this.setState({
-          breakpoint: {
-            list: this.state.breakpoint.list,
-            loading: false
-          }
-        });
-        console.error(err);
-      })
-  }
-
-  handleLoadFile(filename: string) {
-    getFileContents(filename)
-      .then(res => {
-        this.setState({
-          editorContents: res,
-          selectedFile: filename
-        });
-      })
-      .catch(err => {
-        console.error(err);
-        this.setState({
-          editorContents: `Error while opening file: ${filename}
-${err.stack}`,
-          selectedFile: undefined
-        });
-      });
-  }
-
   handleLineClick = (lineNum: number) => {
-    this.setState({
-      breakpoint: {
-        list: this.state.breakpoint.list,
-        loading: true
-      }
-    });
-    addBreakpoint(this.state.selectedFile, lineNum).then(_ => {
-      this.refreshBreakpoints();
-    }).catch(err => {
-      console.error(err);
-      this.setState({
-        breakpoint: {
-          list: this.state.breakpoint.list,
-          loading: false
-        }
-      });
-    });
+    if(FilesStateManager.filesState.selectedFileName) BreakpointsStateManager.addBreakpoint(FilesStateManager.filesState.selectedFileName, lineNum);
   }
 
   handleRemoveBreakpoint = (bpNum: number) => {
-    this.setState({
-      breakpoint: {
-        list: this.state.breakpoint.list,
-        loading: true
-      }
-    });
-    removeBreakpoint(bpNum).then(_ => {
-      this.refreshBreakpoints();
-    }).catch(err => {
-      console.error(err);
-      this.setState({
-        breakpoint: {
-          list: this.state.breakpoint.list,
-          loading: false
-        }
-      });
-    });
+    BreakpointsStateManager.removeBreakpoint(bpNum);
   }
 
-  handleBreakpointClick = (bp: Breakpoint) => {
-    this.handleLoadFile(bp.file);
+  handleBreakpointClick = (bp: BreakpointsStateManager.Breakpoint) => {
+    FilesStateManager.loadFile(bp.file);
   }
 
   handleDebugPressed = () => {
@@ -262,7 +164,7 @@ ${err.stack}`,
         <Grid item
           xs={3}
           className={this.props.classes.marginTop + " " + this.props.classes.dirTreeGrid}>
-          <DirTree onLoadFile={this.handleLoadFile} />
+          <DirTree filesState={FilesStateManager.filesState} />
         </Grid>
         <Grid item
           xs={6}
@@ -271,9 +173,9 @@ ${err.stack}`,
             onAddBreakpoint={this.handleLineClick}
             onRemoveBreakpoint={this.handleRemoveBreakpoint}
             mode="text/x-csrc"
-            breakpoints={this.state.breakpoint.list.filter(br => `${br.file}` === this.state.selectedFile)}
+            breakpointsState={BreakpointsStateManager.breakpointsState}
             execLine={this.state.execState.line}
-            value={this.state.editorContents}
+            value={FilesStateManager.filesState.editorContents}
           />
         </Grid>
         <Grid item
@@ -281,8 +183,7 @@ ${err.stack}`,
           className={this.props.classes.marginTop + " " + this.props.classes.codeDisplayGrid}>
           <RightSideBar tabHeaders={["Breakpoints", "Watch", "Registers"]}>
             <BreakpointList
-              loading={this.state.breakpoint.loading}
-              breakpoints={this.state.breakpoint.list}
+              breakpointsState={BreakpointsStateManager.breakpointsState}
               onClickBreakpoint={this.handleBreakpointClick}
             />
             <Watch watchState={WatchStateManager.watchState}/>

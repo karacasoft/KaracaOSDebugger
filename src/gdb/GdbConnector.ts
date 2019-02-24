@@ -55,7 +55,7 @@ class GdbConnection extends EventEmitter {
     this.stderr = new BufferUntilReadable(this.process.stderr, '\n');
 
     this.stdout.on('data', text => {
-      let result: RegExpExecArray;
+      let result: RegExpExecArray | null;
       if((result = this.consoleOutRegex.exec(text)) !== null) {
         const r: TextResult = { text: result[1] };
         this.emit('console', r);

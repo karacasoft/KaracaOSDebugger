@@ -1,5 +1,5 @@
 import * as client from 'socket.io-client';
-import { StackFrameList } from './debugServiceTypes';
+import { StackFrameList, APIResponse } from './debugServiceTypes';
 
 export const socket = client.connect('http://localhost:5000');
 
@@ -74,7 +74,7 @@ export async function onExecResultFunction(execResultFunction: (event: ExecResul
 export function debugStart(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     socket.emit("debug", 
-    {}, ({ success, ...other }) => {
+    {}, ({ success, ...other }: APIResponse) => {
       if(success) {
         resolve(other.results);
       } else {
@@ -87,7 +87,7 @@ export function debugStart(): Promise<void> {
 export function debugContinue(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     socket.emit("debugStart",
-    {}, ({ success, ...other }) => {
+    {}, ({ success, ...other }: APIResponse) => {
       if(success) {
         resolve(other.results);
       } else {
@@ -100,7 +100,7 @@ export function debugContinue(): Promise<void> {
 export function debugNext(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     socket.emit("debugNext",
-    {}, ({ success, ...other }) => {
+    {}, ({ success, ...other }: APIResponse) => {
       if(success) {
         resolve(other.results);
       } else {
@@ -114,7 +114,7 @@ export function debugStep(reverse?: boolean): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     socket.emit("debugStep", {
       reverse: reverse
-    }, ({ success, ...other }) => {
+    }, ({ success, ...other }: APIResponse) => {
       if(success) {
         resolve(other.results);
       } else {
@@ -127,7 +127,7 @@ export function debugStep(reverse?: boolean): Promise<void> {
 export function debugFinish(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     socket.emit("debugFinish",
-    {}, ({ success, ...other }) => {
+    {}, ({ success, ...other }: APIResponse) => {
       if(success) {
         resolve(other.results);
       } else {
@@ -142,7 +142,7 @@ export function getFiles(dir?: string) {
     socket.emit("getFiles",
     {
       dir: dir
-    }, ({ success, ...other }) => {
+    }, ({ success, ...other }: APIResponse) => {
       if(success) {
         resolve(other.results);
       } else {
@@ -157,7 +157,7 @@ export function getFileContents(file: string): Promise<string> {
     socket.emit("getFileContents",
     {
       file: file,
-    }, ({ success, ...other }) => {
+    }, ({ success, ...other }: APIResponse) => {
       if(success) {
         resolve(other.results);
       } else {
@@ -173,7 +173,7 @@ export function addBreakpoint(filename: string, lineNum: number): Promise<void> 
     {
       fileName: filename,
       lineNumber: lineNum,
-    }, ({ success, ...other }) => {
+    }, ({ success, ...other }: APIResponse) => {
       if(success) {
         resolve();
       } else {
@@ -188,7 +188,7 @@ export function removeBreakpoint(bpNum: number): Promise<void> {
     socket.emit("removeBreakpoint",
     {
       bpNum: bpNum,
-    }, ({ success, ...other }) => {
+    }, ({ success, ...other }: APIResponse) => {
       if(success) {
         resolve();
       } else {
@@ -200,19 +200,19 @@ export function removeBreakpoint(bpNum: number): Promise<void> {
 
 export function getBreakpoints(): Promise<BreakpointListResponse> {
   return new Promise<BreakpointListResponse>((resolve, reject) => {
-    socket.emit("getBreakpoints", {}, ({ success, ...other }) => {
+    socket.emit("getBreakpoints", {}, ({ success, ...other }: APIResponse) => {
       if(success) {
         const results = other.results;
         const table: BreakpointListResponse = {
           nr_rows: parseInt(results.BreakpointTable.nr_rows),
           nr_cols: parseInt(results.BreakpointTable.nr_cols),
-          hdr: results.BreakpointTable.hdr.map(col => ({
+          hdr: results.BreakpointTable.hdr.map((col: any) => ({
             width: parseInt(col.width),
             alignment: parseInt(col.alignment),
             col_name: col.col_name,
             colhdr: col.colhdr
           })),
-          body: results.BreakpointTable.body.map(br => ({
+          body: results.BreakpointTable.body.map((br: any) => ({
             bkpt: {
               number: parseInt(br.bkpt.number),
               type: br.bkpt.type,
@@ -239,7 +239,7 @@ export function getBreakpoints(): Promise<BreakpointListResponse> {
 
 export function getStackInfo(): Promise<StackFrameList> {
   return new Promise<StackFrameList>((resolve, reject) => socket.emit('getStackInfo',
-    {}, ({ success, ...other }) => {
+    {}, ({ success, ...other }: APIResponse) => {
       if(success) {
         resolve(other.results.results.stack);
       } else {
@@ -253,7 +253,7 @@ export function addToWatch(expression: string): Promise<any> {
   return new Promise<any>((resolve, reject) => {
     socket.emit('addToWatch', {
       expression,
-    }, ({ success, ...other}) => {
+    }, ({ success, ...other}: APIResponse) => {
       if(success) {
         resolve(other.results);
       } else {
@@ -267,7 +267,7 @@ export function removeFromWatch(name: string): Promise<any> {
   return new Promise<any>((resolve, reject) => {
     socket.emit('removeFromWatch', {
       name,
-    }, ({ success, ...other }) => {
+    }, ({ success, ...other }: APIResponse) => {
       if(success) {
         resolve(other.results);
       } else {
@@ -279,7 +279,7 @@ export function removeFromWatch(name: string): Promise<any> {
 
 export function watchUpdate(): Promise<any> {
   return new Promise<any>((resolve, reject) => {
-    socket.emit('watchUpdate', {}, ({ success, ...other }) => {
+    socket.emit('watchUpdate', {}, ({ success, ...other }: APIResponse) => {
       if(success) {
         resolve(other.results);
       } else {
@@ -294,7 +294,7 @@ export function editItemOnWatch(name: string, expression: string): Promise<any> 
     socket.emit('watchUpdate', {
       name,
       expression,
-    }, ({ success, ...other }) => {
+    }, ({ success, ...other }: APIResponse) => {
       if(success) {
         resolve(other.results);
       } else {
@@ -309,7 +309,7 @@ export function getRegisterValues(): Promise<any> {
     socket.emit('getRegisterValues', {
       format: 'x',
       registers: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
-    }, ({ success, ...other}) => {
+    }, ({ success, ...other}: APIResponse) => {
       if(success) {
         console.log(other.results);
         resolve(other.results);
@@ -322,7 +322,7 @@ export function getRegisterValues(): Promise<any> {
 
 export function getRegisterNames(): Promise<any> {
   return new Promise<any>((resolve, reject) => {
-    socket.emit('getRegisterNames', {}, ({ success, ...other}) => {
+    socket.emit('getRegisterNames', {}, ({ success, ...other}: APIResponse) => {
       if(success) {
         resolve(other.results);
       } else {
